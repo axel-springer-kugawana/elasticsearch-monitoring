@@ -112,7 +112,6 @@ def fetch_nodes_stats(base_url='http://localhost:9200/'):
         response = requests.get(base_url + '_nodes/stats', timeout=(5, 5))
         r_json = response.json()
         cluster_name = convert_cluster_name(r_json['cluster_name'])
-
         # we are opting to not use the timestamp as reported by the actual node
         # to be able to better sync the various metrics collected
         utc_datetime = datetime.datetime.utcnow()
@@ -180,14 +179,13 @@ def calc_node_delta_statistics(node_data, prev_data):
     node_data["node_stats"]["indices"]["search"]["fetch_time_current"] = mapper.getFetchTime()
     node_data["node_stats"]["indices"]["search"]["fetch_count_delta"] = mapper.getFetchTotal()
     node_data["node_stats"]["indices"]["search"]["query_then_fetch_avg_time"] = mapper.getAvgQueryThenFetchTime()
-
     # machine statistics
+    node_data["node_stats"]["thread_pool"]["write"]["current_rejected"] = mapper.getRejectedBulk()
     node_data["node_stats"]["indices"]["merges"]["avg_size_in_bytes"] = mapper.getMergeTotal()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["write_ops_current"] = mapper.getWriteOperations()
     node_data["node_stats"]["fs"]["io_stats"]["total"]["read_ops_current"] = mapper.getReadOperations()
     node_data["node_stats"]["fs"]["total"]["free_ratio"] =\
         node_data["node_stats"]["fs"]["total"]["free_in_bytes"] / node_data["node_stats"]["fs"]["total"]["total_in_bytes"]
-
 
 # shaig 18.3 - adding data for index stats
 def fetch_index_stats(base_url='http://localhost:9200/'):

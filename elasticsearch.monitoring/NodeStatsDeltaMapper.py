@@ -38,6 +38,9 @@ class NodeStatsDeltaMapper:
     def getReadOperations(self):
         return self.getDeltaVal("fs.io_stats.total.read_operations")
 
+    def getRejectedBulk(self):
+        return self.getDeltaVal("thread_pool.write.rejected")
+
     def getDeltaVal(self, key):
         prevVal = dict_get(self.prev_stats, key)
         latestVal = dict_get(self.latest_stats, key)

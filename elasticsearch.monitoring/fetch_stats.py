@@ -214,7 +214,7 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
                 indices_to_query += ','
             index_name = d['_source']['index_name']
             indices_to_query += index_name
-        if indices_to_query is "":
+        if indices_to_query == "":
             return None
 
         # getting index stats for all relevant indices
@@ -226,7 +226,7 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
         for index_name in r_json['indices']:
             print("Building log for index " + index_name)
             index_data = {
-                "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
+                "@timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
                 "cluster_uuid": cluster_uuid
             }
@@ -274,6 +274,9 @@ def create_templates():
 
 def poll_metrics(cluster_host, monitor, monitor_host):
     cluster_health, node_stats,index_stats = get_all_data(cluster_host)
+    ship_to_logzio(cluster_health[0])
+    ship_to_logzio(node_stats[0])
+    ship_to_logzio(index_stats[0])
     if monitor == 'elasticsearch':
         into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats)
     elif monitor == 'signalfx':
@@ -335,6 +338,18 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
+def ship_to_logzio(data):
+    print(data)
+    metric = {
+        "dimensions": {
+            "elasticsearch_fetcher": data
+        },
+        "application": "elasticsearch_fetcher"
+    }
+    logzioUrl = "https://listener-eu.logz.io:8071"
+    logztoken = os.environ['LOGZIO_TOKEN']
+    jsonMetric = json.dumps(metric)
+    requests.post(logzioUrl, data=jsonMetric, params={"token": logztoken})
 
 def with_type(o, _type):
     o["type"] = _type

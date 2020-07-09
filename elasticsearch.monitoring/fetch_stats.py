@@ -276,11 +276,15 @@ def poll_metrics(cluster_host, monitor, monitor_host):
     cluster_health, node_stats,index_stats = get_all_data(cluster_host)
     ship_to_logzio(cluster_health[0])
     ship_to_logzio(node_stats[0])
-    ship_to_logzio(index_stats[0])
-    if monitor == 'elasticsearch':
-        into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats)
-    elif monitor == 'signalfx':
-        into_signalfx(monitor_host, cluster_health, node_stats)
+    # ship_to_logzio(index_stats[0])
+
+    # for Tag 1.3.1 of the fetcher.
+    # Logzio POC
+
+    # if monitor == 'elasticsearch':
+    #     into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats)
+    # elif monitor == 'signalfx':
+    #     into_signalfx(monitor_host, cluster_health, node_stats)
 
 
 def get_all_data(cluster_host):
@@ -339,7 +343,6 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
         print("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
 def ship_to_logzio(data):
-    print(data)
     metric = {
         "dimensions": {
             "elasticsearch_fetcher": data
@@ -347,9 +350,10 @@ def ship_to_logzio(data):
         "application": "elasticsearch_fetcher"
     }
     logzioUrl = "https://listener-eu.logz.io:8071"
-    logztoken = os.environ['LOGZIO_TOKEN']
+    logztoken = os.environ.get("LOGZIO_TOKEN")
     jsonMetric = json.dumps(metric)
-    requests.post(logzioUrl, data=jsonMetric, params={"token": logztoken})
+    logzioResp = requests.post(logzioUrl, data=jsonMetric, params={"token": logztoken})
+    print(logzioResp)
 
 def with_type(o, _type):
     o["type"] = _type

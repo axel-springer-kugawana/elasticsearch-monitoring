@@ -275,7 +275,11 @@ def create_templates():
 def poll_metrics(cluster_host, monitor, monitor_host):
     cluster_health, node_stats,index_stats = get_all_data(cluster_host)
     ship_to_logzio(cluster_health[0])
-    ship_to_logzio(node_stats[0])
+    for node in node_stats:
+        ship_to_logzio(node)
+
+
+    # 
     # ship_to_logzio(index_stats[0])
 
     # for Tag 1.3.1 of the fetcher.
@@ -361,7 +365,7 @@ def with_type(o, _type):
 
 
 @click.command()
-@click.option('--interval', default=10, help='Interval (in seconds) to run this')
+@click.option('--interval', default=30, help='Interval (in seconds) to run this')
 @click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')

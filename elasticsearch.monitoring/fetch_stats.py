@@ -343,9 +343,9 @@ def ship_to_logzio(data):
     requests.post(logzioUrl, data=jsonMetric, params={"token": logztoken})
 
 def bulkToLogzIO(bulkData):
-    logzIOHost = 'https://listener-eu.logz.io:8071'
-    logzIOType = 'elastic_monitoring'
-    logzIOToken = 'rGCGXJwfGXUSbxcaUZiZPvefMEcGSqGq'
+    logzIOHost = os.environ.get('LOGZ_HOST', 'https://listener-eu.logz.io:8071') 
+    logzIOType = os.environ.get('LOGZ_TYPE', 'elastic_monitoring')
+    logzIOToken = os.environ.get('LOGZ_TOKEN', 'rGCGXJwfGXUSbxcaUZiZPvefMEcGSqGq')
     logzIOFullURL = f"{logzIOHost}?token={logzIOToken}&type={logzIOType}"
     return requests.post(logzIOFullURL,
                     data='\n'.join(bulkData),
@@ -362,7 +362,7 @@ def with_type(o, _type):
 @click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
-@click.argument('cluster-host', default='https://elastic:b2zB8szSRu5bLs6rIG196lfD@936a0352e71547c69d7118fe9499c1d0.eu-west-1.aws.found.io:9243/')
+@click.argument('cluster-host', default='http://10.0.0.59:9200/')
 def main(interval, cluster_host, monitor, monitor_host, index_prefix):
     global cluster_uuid, cluster_name, indexPrefix
 

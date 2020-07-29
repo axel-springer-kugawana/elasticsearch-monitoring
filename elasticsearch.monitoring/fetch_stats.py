@@ -313,31 +313,32 @@ def into_signalfx(sfx_key, cluster_health, node_stats):
 
 def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
     utc_datetime = datetime.datetime.utcnow()
-    index_name = indexPrefix + str(utc_datetime.strftime('%Y.%m.%d'))
-
-    cluster_health_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
-    node_stats_data = ['{"index":{"_index":"'+index_name+'","_type":"_doc"}}\n' + json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
+    cluster_health_data = [json.dumps(with_type(o, 'cluster_health'))+'\n' for o in cluster_health]
+    node_stats_data = [json.dumps(with_type(o, 'node_stats'))+'\n' for o in node_stats]
     data = node_stats_data + cluster_health_data
     if index_stats is not None:
-        index_stats_data = ['{"index":{"_index":"' + index_name + '","_type":"_doc"}}\n' + json.dumps(
-            with_type(o, 'index_stats')) + '\n' for o in index_stats]
+        index_stats_data = [json.dumps(with_type(o, 'index_stats')) + '\n' for o in index_stats]
         data += index_stats_data
 
     try:
-        bulk_response = requests.post(monitor_host + index_name + '/_bulk',
-                                      data='\n'.join(data),
-                                      headers={'Content-Type': 'application/x-ndjson'},
-                                      timeout=(30, 30))
+        bulk_response = bulkToLogzIO(data)
         assert_http_status(bulk_response)
-        for item in bulk_response.json()["items"]:
-            if item.get("index") and item.get("index").get("status") != 201:
-                click.echo(json.dumps(item.get("index").get("error")))
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
 
+def bulkToLogzIO(bulkData):
+    logzIOHost = 'https://listener-eu.logz.io:8071'
+    logzIOType = 'elastic_monitoring'
+    logzIOToken = 'rGCGXJwfGXUSbxcaUZiZPvefMEcGSqGq'
+    logzIOFullURL = f"{logzIOHost}?token={logzIOToken}&type={logzIOType}"
+    return requests.post(logzIOFullURL,
+                    data='\n'.join(bulkData),
+                    headers={'Content-Type': 'application/x-ndjson'},
+                    timeout=(30, 30))
+
 def with_type(o, _type):
-    o["type"] = _type
+    o["monitor_type"] = _type
     return o
 
 
@@ -346,7 +347,7 @@ def with_type(o, _type):
 @click.option('--index-prefix', default='', help='Index prefix for Elastic monitor')
 @click.argument('monitor-host', default=monitoringCluster)
 @click.argument('monitor', default='elasticsearch')
-@click.argument('cluster-host', default='http://10.0.0.59:9200/')
+@click.argument('cluster-host', default='https://elastic:b2zB8szSRu5bLs6rIG196lfD@936a0352e71547c69d7118fe9499c1d0.eu-west-1.aws.found.io:9243/')
 def main(interval, cluster_host, monitor, monitor_host, index_prefix):
     global cluster_uuid, cluster_name, indexPrefix
 

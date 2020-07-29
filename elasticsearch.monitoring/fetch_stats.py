@@ -26,7 +26,7 @@ clusters_dictionary = {
     "4fb043c1b0ef4c3ba5fb94e8e74e5657": "Y2-EC-Yzer",
     "8d19975ab0a94e4ea06bc4d251a099ef": "Y2-EC-Prod-V2",
     "c47b4d5910bb415b80e843e257fa57f3": "Y2-EC-Prod-V3",
-    "936a0352e71547c69d7118fe9499c1d0": "Y2-EC-Prod-V4",
+    "936a0352e71547c69d7118fe9499c1d0": "Y2-EC-Prod-V4"
 }
 
 def merge(one, two):
@@ -214,7 +214,7 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
                 indices_to_query += ','
             index_name = d['_source']['index_name']
             indices_to_query += index_name
-        if indices_to_query is "":
+        if indices_to_query == "":
             return None
 
         # getting index stats for all relevant indices
@@ -226,7 +226,7 @@ def fetch_index_stats(base_url='http://localhost:9200/'):
         for index_name in r_json['indices']:
             print("Building log for index " + index_name)
             index_data = {
-                "timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
+                "@timestamp": str(utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'),
                 "cluster_name": cluster_name,
                 "cluster_uuid": cluster_uuid
             }
@@ -274,6 +274,9 @@ def create_templates():
 
 def poll_metrics(cluster_host, monitor, monitor_host):
     cluster_health, node_stats,index_stats = get_all_data(cluster_host)
+    ship_to_logzio(cluster_health[0])
+    ship_to_logzio(node_stats[0])
+    ship_to_logzio(index_stats[0])
     if monitor == 'elasticsearch':
         into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats)
     elif monitor == 'signalfx':
@@ -326,6 +329,18 @@ def into_elasticsearch(monitor_host, cluster_health, node_stats,index_stats):
     except (requests.exceptions.Timeout, socket.timeout):
         print("[%s] Timeout received while pushing collected metrics to Elasticsearch" % (time.strftime("%Y-%m-%d %H:%M:%S")))
 
+def ship_to_logzio(data):
+    print(data)
+    metric = {
+        "dimensions": {
+            "elasticsearch_fetcher": data
+        },
+        "application": "elasticsearch_fetcher"
+    }
+    logzioUrl = "https://listener-eu.logz.io:8071"
+    logztoken = os.environ['LOGZIO_TOKEN']
+    jsonMetric = json.dumps(metric)
+    requests.post(logzioUrl, data=jsonMetric, params={"token": logztoken})
 
 def bulkToLogzIO(bulkData):
     logzIOHost = 'https://listener-eu.logz.io:8071'

@@ -19,14 +19,10 @@ working_dir = os.path.dirname(os.path.realpath(__file__))
 r_json_node_prev = {}
 r_json_index_prev = {}
 clusters_dictionary = {
-    "b1780b614f5d4e0b8e3ad7e823889a8e": "Y2-EC-Prod",
     "00df2ff0bd8944e6868ba73f991f9a1d": "Y2-EC-Dev",
-    "f557cc5f740b448785b82e7539490bed": "Y2-EC-Monitor",
-    "55c9d320289c47eb80f485c0f53bbc5f": "Y2-EC-Logs",
-    "4fb043c1b0ef4c3ba5fb94e8e74e5657": "Y2-EC-Yzer",
-    "8d19975ab0a94e4ea06bc4d251a099ef": "Y2-EC-Prod-V2",
-    "c47b4d5910bb415b80e843e257fa57f3": "Y2-EC-Prod-V3",
-    "936a0352e71547c69d7118fe9499c1d0": "Y2-EC-Prod-V4"
+    "4fb043c1b0ef4c3ba5fb94e8e74e5657": "Y2-EC-Yzer-Prod",
+    "936a0352e71547c69d7118fe9499c1d0": "Y2-EC-Prod-V4",
+    "404e1286d568493a87f0a0aceaa25fba": "Y2-EC-Yzer-Dev"
 }
 
 def merge(one, two):
